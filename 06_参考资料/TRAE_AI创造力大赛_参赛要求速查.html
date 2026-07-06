@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRAE AI 创造力大赛参赛要求速查</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:#070a18;color:#e5ecff;line-height:1.7}
+    body::before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 10%,rgba(80,120,255,.28),transparent 28%),radial-gradient(circle at 80% 0%,rgba(34,211,238,.22),transparent 26%),radial-gradient(circle at 50% 100%,rgba(168,85,247,.2),transparent 34%);pointer-events:none;z-index:-2}
+    body::after{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent 92%);pointer-events:none;z-index:-1}
+    a{color:#67e8f9;text-decoration:none}
+    a:hover{text-decoration:underline}
+    html{scroll-behavior:smooth}
+    .page{max-width:1320px;margin:0 auto;padding:48px 22px 72px}
+    .hero{position:relative;padding:42px;border:1px solid rgba(125,211,252,.24);border-radius:30px;background:linear-gradient(135deg,rgba(15,23,42,.92),rgba(17,24,39,.74));box-shadow:0 24px 80px rgba(0,0,0,.42);overflow:hidden}
+    .hero::after{content:"";position:absolute;right:-130px;top:-140px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(103,232,249,.28),transparent 62%)}
+    .eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 13px;border:1px solid rgba(103,232,249,.28);border-radius:999px;background:rgba(14,165,233,.08);color:#93c5fd;font-size:13px;font-weight:700;letter-spacing:.08em}
+    h1{margin-top:18px;font-size:clamp(34px,5vw,66px);line-height:1.05;letter-spacing:-.04em;background:linear-gradient(135deg,#e0f2fe,#93c5fd,#c4b5fd,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .subtitle{max-width:860px;margin-top:18px;color:#b7c4e7;font-size:18px}
+    .meta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .pill{padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);color:#dbeafe;font-size:14px}
+    .content-shell{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;align-items:start;margin-top:24px}
+    .toc{position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;padding:20px;border-radius:24px;border:1px solid rgba(103,232,249,.2);background:linear-gradient(135deg,rgba(15,23,42,.88),rgba(30,41,59,.58));box-shadow:0 18px 60px rgba(0,0,0,.28);backdrop-filter:blur(18px)}
+    .toc h2{margin-bottom:14px;font-size:20px;color:#f8fafc}
+    .toc-grid{display:grid;grid-template-columns:1fr;gap:9px}
+    .toc a{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);color:#dbeafe;font-size:13px;transition:all .22s ease}
+    .toc a::after{content:"→";color:#67e8f9;font-size:12px;opacity:.76}
+    .toc a:hover{transform:translateX(3px);background:rgba(14,165,233,.12);border-color:rgba(103,232,249,.35);text-decoration:none;color:#fff}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+    .card{grid-column:span 6;padding:26px;border-radius:24px;border:1px solid rgba(148,163,184,.18);background:linear-gradient(180deg,rgba(15,23,42,.78),rgba(15,23,42,.48));box-shadow:0 16px 50px rgba(0,0,0,.28)}
+    .card.full{grid-column:1/-1}
+    .card.third{grid-column:span 4}
+    h2{font-size:24px;margin-bottom:14px;color:#f8fafc}
+    h3{font-size:18px;margin:20px 0 8px;color:#bfdbfe}
+    p{color:#cbd5e1;margin:8px 0}
+    ul{padding-left:20px;color:#cbd5e1}
+    li{margin:8px 0}
+    strong{color:#fff}
+    .tag{display:inline-block;margin:4px 6px 4px 0;padding:5px 10px;border-radius:999px;background:rgba(99,102,241,.16);border:1px solid rgba(129,140,248,.28);color:#c7d2fe;font-size:13px}
+    .ok{color:#86efac}.warn{color:#fde68a}.danger{color:#fca5a5}
+    .timeline{display:grid;gap:14px}
+    .step{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:18px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}
+    .date{font-weight:800;color:#67e8f9}
+    .checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+    .check{padding:14px 16px;border-radius:16px;background:rgba(2,6,23,.36);border:1px solid rgba(148,163,184,.16)}
+    .source{font-size:13px;color:#94a3b8;word-break:break-all}
+    .footer{margin-top:28px;padding:20px;border-radius:20px;background:rgba(15,23,42,.68);border:1px solid rgba(148,163,184,.16);color:#94a3b8;font-size:13px}
+    article[id]{scroll-margin-top:24px}
+    @media(max-width:1020px){.content-shell{grid-template-columns:1fr}.toc{position:static;max-height:none}.toc-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:860px){.card,.card.third{grid-column:1/-1}.hero{padding:30px 22px}.step{grid-template-columns:1fr}.checklist{grid-template-columns:1fr}.toc-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <span class="eyebrow">TRAE AI 创造力大赛 · 本地规则速查</span>
+      <h1>参赛要求与提交清单</h1>
+      <p class="subtitle">根据大赛官网、报名指南和初赛参赛指南整理，方便后续随时离线查看。当前项目“考点雷达”建议按“学习工作”赛道准备。</p>
+      <div class="meta">
+        <span class="pill">当前赛道：学习工作</span>
+        <span class="pill">报名 + 初赛：06.16–07.15</span>
+        <span class="pill">报名方式：社区报名专区发帖</span>
+        <span class="pill">初赛方式：社区初赛专区发 Demo 帖</span>
+      </div>
+    </section>
+
+    <div class="content-shell">
+      <nav class="toc" aria-label="页面目录">
+        <h2>快速目录</h2>
+        <div class="toc-grid">
+          <a href="#overview">一、赛事总览</a>
+          <a href="#registration">二、报名要求</a>
+          <a href="#registration-template">三、报名帖模板</a>
+          <a href="#demo-requirements">四、初赛 Demo 要求</a>
+          <a href="#demo-template">五、初赛作品帖模板</a>
+          <a href="#review">六、评审与晋级重点</a>
+          <a href="#timeline">七、赛事时间线</a>
+          <a href="#track">八、赛道选择</a>
+          <a href="#upload">九、社区上传限制</a>
+          <a href="#radar-checklist">十、考点雷达清单</a>
+          <a href="#sources">十一、官方来源</a>
+        </div>
+      </nav>
+
+      <section class="grid">
+      <article class="card full" id="overview">
+        <h2>一、赛事总览</h2>
+        <p>TRAE AI 创造力大赛鼓励参赛者使用 TRAE Work 或 TRAE IDE，将创意做成能运行、能体验的 AI 作品。报名和初赛在社区完成发帖，复赛继续完善为完整产品，决赛为线下路演。</p>
+        <div>
+          <span class="tag">个人参赛</span>
+          <span class="tag">使用 TRAE Work / TRAE IDE</span>
+          <span class="tag">可体验 Demo</span>
+          <span class="tag">需证明创作过程真实</span>
+        </div>
+      </article>
+
+      <article class="card" id="registration">
+        <h2>二、报名要求</h2>
+        <ul>
+          <li><strong>报名位置：</strong>TRAE 官方中文社区“大赛报名专区”。</li>
+          <li><strong>报名时间：</strong>2026 年 6 月 16 日 00:00 至 7 月 15 日 23:59。</li>
+          <li><strong>报名方式：</strong>发一篇“创意提案”帖，即为提交报名。</li>
+          <li><strong>标签要求：</strong>四选一：生活娱乐 / 学习工作 / 社会服务 / 硬件交互；如参加公益附加赛题，可加选社会公益。</li>
+          <li><strong>标题格式：</strong>报名赛道 + 创意名称。</li>
+          <li><strong>正文要求：</strong>不少于 100 字，至少包含 4 个部分。</li>
+          <li><strong>附件要求：</strong>必须上传 TRAE Work 生成的创意产物 HTML 文件。</li>
+        </ul>
+      </article>
+
+      <article class="card" id="registration-template">
+        <h2>三、报名帖正文模板</h2>
+        <ul>
+          <li><strong>1. 创意名称 + 创意介绍：</strong>说明想解决的问题、为什么想到做这个、大概是什么产品。</li>
+          <li><strong>2. 目标用户及痛点：</strong>说明面向哪些用户、什么场景下使用、当前有什么不方便。</li>
+          <li><strong>3. 价值与意义：</strong>从商业价值、效率提升、社会价值中选择 1–2 个角度说明。</li>
+          <li><strong>4. 创意产物 HTML 文件：</strong>直接把 HTML 上传到社区报名帖中。</li>
+        </ul>
+        <p class="warn">注意：社区发帖成功不等于审核通过，官方每个工作日审核报名帖。</p>
+      </article>
+
+      <article class="card full" id="demo-requirements">
+        <h2>四、初赛 Demo 提交要求</h2>
+        <div class="checklist">
+          <div class="check"><strong>参赛前提</strong><br>初赛作品有效的前提是报名审核已通过。</div>
+          <div class="check"><strong>提交位置</strong><br>到“大赛初赛专区”发布 Demo 作品帖。</div>
+          <div class="check"><strong>Demo 形态</strong><br>需要可交互、能体验；可提供公开体验链接，或将交互式 HTML 用 Zip 打包上传。</div>
+          <div class="check"><strong>赛道一致</strong><br>初赛标签需与报名通过的赛道保持一致。</div>
+          <div class="check"><strong>过程证明</strong><br>需展示用 TRAE 完成 Demo 开发的完整流程。</div>
+          <div class="check"><strong>关键材料</strong><br>不少于 3 张关键步骤截图 + 不少于 3 个关键任务 Session ID。</div>
+        </div>
+      </article>
+
+      <article class="card" id="demo-template">
+        <h2>五、初赛作品帖模板</h2>
+        <ul>
+          <li><strong>1. Demo 简介：</strong>是什么、面向谁、2–3 个核心功能，建议配截图。</li>
+          <li><strong>2. Demo 创作思路：</strong>灵感来源、想解决的问题、为什么做这个方向。</li>
+          <li><strong>3. Demo 体验地址：</strong>公开体验链接 / Zip 打包 HTML / 硬件演示视频。</li>
+          <li><strong>4. TRAE 实践过程：</strong>关键步骤截图不少于 3 张，Session ID 不少于 3 个。</li>
+          <li><strong>最后补充：</strong>附上已经通过审核的社区报名帖链接。</li>
+        </ul>
+      </article>
+
+      <article class="card" id="review">
+        <h2>六、评审与晋级重点</h2>
+        <ul>
+          <li><strong>基本要求：</strong>Demo 与报名创意方向一致，基于 TRAE IDE 或 TRAE Work 完成。</li>
+          <li><strong>可体验：</strong>提供可体验地址或 HTML 文件，能清晰展示核心功能与目标场景。</li>
+          <li><strong>结构完整：</strong>帖子结构清晰，便于评审理解。</li>
+          <li><strong>真实过程：</strong>展示任务拆解、关键 Prompt / 操作、踩坑与解决过程。</li>
+          <li><strong>原创合规：</strong>内容原创，版权清晰，不包含违法违规或侵权内容。</li>
+        </ul>
+      </article>
+
+      <article class="card full" id="timeline">
+        <h2>七、赛事时间线</h2>
+        <div class="timeline">
+          <div class="step"><div class="date">06.16–07.15</div><div><strong>报名 + 初赛</strong><br>提交创意，创作并提交可体验 Demo。报名通过后可领取速通奖励，并进入初赛评审。</div></div>
+          <div class="step"><div class="date">07.21–08.09</div><div><strong>复赛</strong><br>在初赛 Demo 基础上完善为具备完整用户路径和核心能力的正式产品，并提交到社区。</div></div>
+          <div class="step"><div class="date">08.21–08.22</div><div><strong>决赛</strong><br>线下现场路演，完成作品展示、项目讲解和现场答辩。</div></div>
+        </div>
+      </article>
+
+      <article class="card third" id="track">
+        <h2>八、赛道选择</h2>
+        <ul>
+          <li>生活娱乐</li>
+          <li class="ok"><strong>学习工作：适合考点雷达</strong></li>
+          <li>社会服务</li>
+          <li>硬件交互</li>
+          <li>附加赛题：社会公益</li>
+        </ul>
+      </article>
+
+      <article class="card third" id="upload">
+        <h2>九、社区上传限制</h2>
+        <ul>
+          <li>支持文字、图片、GIF、链接。</li>
+          <li>支持 20M 以内文件。</li>
+          <li>视频、代码库、大体积压缩包建议上传第三方平台，再附公开链接。</li>
+        </ul>
+      </article>
+
+      <article class="card third" id="radar-checklist">
+        <h2>十、考点雷达当前清单</h2>
+        <ul>
+          <li class="ok">报名帖原稿已准备。</li>
+          <li class="ok">HTML 创意产物已准备。</li>
+          <li class="warn">报名后需保存审核通过链接。</li>
+          <li class="warn">初赛需补 3 张过程截图和 3 个 Session ID。</li>
+        </ul>
+      </article>
+
+      <article class="card full" id="sources">
+        <h2>十一、官方来源</h2>
+        <p class="source">大赛官网：https://www.trae.cn/ai-creativity?utm_source=website</p>
+        <p class="source">报名指南：https://forum.trae.cn/t/topic/22548</p>
+        <p class="source">初赛参赛指南：https://forum.trae.cn/t/topic/22549</p>
+        <p class="source">大赛规则全攻略：https://forum.trae.cn/t/topic/22547</p>
+      </article>
+      </section>
+    </div>
+
+    <footer class="footer">
+      本文件为本地速查版，便于项目准备阶段离线查看。正式提交前请再以官网和社区置顶帖为准核对一次最新要求。
+    </footer>
+  </main>
+</body>
+</html>
