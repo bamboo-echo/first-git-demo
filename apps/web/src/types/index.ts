@@ -85,6 +85,19 @@ export type PlanRecord = {
   generatedAt: string
 }
 
+export type HistoryRecord = {
+  id: string
+  userId: string
+  courseId: string
+  courseName: string
+  finalScore: number | null
+  keyPointsCount: number
+  tasksTotal: number
+  tasksDone: number
+  snapshotSummary: string[]
+  archivedAt: string
+}
+
 export type AnalysisStatus = 'idle' | 'running' | 'ready'
 
 export type AppTab = 'course' | 'materials' | 'analysis' | 'plan' | 'execution' | 'history'
@@ -96,5 +109,6 @@ export type CourseRecord = {
   tasks: Task[]
   analysis?: AnalysisRecord
   plans?: PlanRecord[]
+  history?: HistoryRecord[]
   updatedAt: string
 }

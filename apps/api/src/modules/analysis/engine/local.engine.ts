@@ -9,6 +9,7 @@ export type AnalysisInput = {
   notes: string
   materials: Array<{
     title: string
+    description?: string
     category: 'exam' | 'ppt' | 'catalog' | 'scope' | 'notes' | 'exercises'
     status: 'ready' | 'draft'
   }>
@@ -60,6 +61,15 @@ const keyPointTemplates: Record<string, string[]> = {
 const defaultQuestionTypes = ['简答题 35%', '选择题 30%', '计算题 20%', '综合题 15%']
 const defaultKeyPoints = ['核心概念辨析', '典型题型解法', '重点公式定理', '真题高频考点', '易错点归纳']
 
+const categoryWeights: Record<string, number> = {
+  exam: 34,
+  scope: 24,
+  ppt: 18,
+  catalog: 14,
+  exercises: 7,
+  notes: 3,
+}
+
 function parseReviewHours(hoursText: string): number {
   const match = hoursText?.match(/(\d+(?:\.\d+)?)/)
   return match ? parseFloat(match[1]) : 8
@@ -67,6 +77,31 @@ function parseReviewHours(hoursText: string): number {
 
 function findMatchKey(name: string, templates: Record<string, string[]>): string | null {
   return Object.keys(templates).find((k) => name?.includes(k)) || null
+}
+
+function tokenizeText(text: string): string[] {
+  return (text || '')
+    .replace(/[，。！？、；：,.!?;:()（）【】\[\]《》]/g, ' ')
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 2)
+}
+
+function extractMaterialSignals(input: AnalysisInput) {
+  const scores = new Map<string, number>()
+  for (const material of input.materials || []) {
+    const base = material.status === 'ready' ? categoryWeights[material.category] || 5 : 2
+    const text = `${material.title || ''} ${material.description || ''}`
+    for (const token of tokenizeText(text).slice(0, 8)) {
+      scores.set(token, (scores.get(token) || 0) + base)
+    }
+  }
+  for (const token of tokenizeText(`${input.examScope || ''} ${input.notes || ''}`).slice(0, 20)) {
+    scores.set(token, (scores.get(token) || 0) + 12)
+  }
+  return Array.from(scores.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, score]) => ({ name, score }))
 }
 
 function getRemainingDays(examTime: string): number {
@@ -135,6 +170,9 @@ function calculateReadinessScore(input: AnalysisInput): number {
 export function analyzeCourseLocal(input: AnalysisInput): Omit<AnalysisOutput, 'aiProvider' | 'generatedAt'> {
   const courseName = input.courseName || '通用课程'
   const hasExam = (input.materials || []).some((m) => m.category === 'exam' && m.status === 'ready')
+  const hasScope = Boolean(input.examScope?.trim()) || (input.materials || []).some((m) => m.category === 'scope' && m.status === 'ready')
+  const hasTeacherSignal = Boolean(input.notes?.trim()) || (input.materials || []).some((m) => ['ppt', 'notes'].includes(m.category) && m.status === 'ready')
+  const materialSignals = extractMaterialSignals(input)
 
   // 1. 题型结构
   const matchedKey = findMatchKey(courseName, questionTypeTemplates)
@@ -144,7 +182,12 @@ export function analyzeCourseLocal(input: AnalysisInput): Omit<AnalysisOutput, '
 
   // 2. 高频考点
   const matchedPointKey = findMatchKey(courseName, keyPointTemplates)
-  const keyPoints = matchedPointKey ? keyPointTemplates[matchedPointKey] : defaultKeyPoints
+  const templatePoints = matchedPointKey ? keyPointTemplates[matchedPointKey] : defaultKeyPoints
+  const signalPoints = materialSignals
+    .filter((signal) => !templatePoints.some((point) => point.includes(signal.name) || signal.name.includes(point)))
+    .slice(0, 3)
+    .map((signal) => `${signal.name} · 资料命中 ${signal.score}`)
+  const keyPoints = [...templatePoints.slice(0, 4), ...signalPoints].slice(0, 7)
 
   // 3. 来源依据
   const evidence: string[] = []
@@ -169,6 +212,12 @@ export function analyzeCourseLocal(input: AnalysisInput): Omit<AnalysisOutput, '
   } else {
     evidence.push('考试范围信息仍是草稿状态，建议补充')
   }
+  if (hasTeacherSignal) {
+    evidence.push('老师强调信息已纳入权重，课件/备注会提升相关章节优先级')
+  }
+  if (hasScope) {
+    evidence.push('考试范围与资料标题已交叉匹配，用于生成章节重点区')
+  }
 
   // 4. 准备度
   const readinessScore = calculateReadinessScore(input)
@@ -183,6 +232,7 @@ export function analyzeCourseLocal(input: AnalysisInput): Omit<AnalysisOutput, '
     supplementList.push('导入老师课件或讲义，识别老师重点')
   }
   if (!input.examScope) supplementList.push('完善考试范围说明')
+  if (!hasTeacherSignal) supplementList.push('补充老师强调内容或课堂笔记，提升重点判断可信度')
 
   const remainingDays = getRemainingDays(input.examTime)
   if (remainingDays < 7) {
@@ -196,6 +246,7 @@ export function analyzeCourseLocal(input: AnalysisInput): Omit<AnalysisOutput, '
     `课程：${courseName}`,
     `已就绪资料 ${readyCount} 份`,
     `当前剩余任务 ${pendingTasks} / ${totalTasks} 项`,
+    `资料信号 ${materialSignals.slice(0, 3).map((signal) => signal.name).join('、') || '待补充'}`,
     `剩余复习时间 ${input.reviewHours || '8'} 小时 · ${
       parseReviewHours(input.reviewHours) >= 24 ? '时间充裕，建议标准版' : '时间紧张，建议极速版'
     }`,
@@ -220,6 +271,7 @@ export type PlanInput = {
   reviewHours: string
   keyPoints: string[]
   readinessScore: number
+  supplementList?: string[]
   mode: 'sprint' | 'standard' | 'supplement'
 }
 
@@ -232,29 +284,35 @@ export type PlanOutput = {
 export function generatePlan(input: PlanInput): PlanOutput {
   const hours = parseReviewHours(input.reviewHours)
   const keyPoints = input.keyPoints || []
+  const supplementList = input.supplementList || []
+  const remainingDays = getRemainingDays(input.examTime)
+  const intensity = hours <= 4 || remainingDays <= 2 ? '极限冲刺' : hours <= 12 || remainingDays <= 7 ? '高压冲刺' : '系统推进'
 
   if (input.mode === 'sprint') {
+    const sprintItems = [
+      `先用 ${Math.min(45, Math.max(20, Math.round(hours * 10)))} 分钟速览 ${keyPoints.slice(0, 2).join('、') || '核心考点'} 的结论与公式`,
+      '用 1 套真题限时自测，标记错点',
+      `回炉错点对应的 ${keyPoints[2] || '高频考点'}`,
+    ]
+    if (input.readinessScore < 50) sprintItems.push('只保留最高频题型，低收益章节暂缓')
     return {
       title: '极速版 · 路线',
-      description: '时间紧张时优先覆盖最高收益考点',
-      items: [
-        `速览 ${keyPoints.slice(0, 2).join('、') || '核心考点'} 的结论与公式`,
-        '用 1 套真题限时自测，标记错点',
-        `回炉错点对应的 ${keyPoints[2] || '高频考点'}`,
-      ],
+      description: `${intensity}策略：优先覆盖最高收益考点`,
+      items: sprintItems,
     }
   }
 
   if (input.mode === 'supplement') {
+    const supplementItems = [
+      `梳理 ${keyPoints.slice(2).join('、') || '次重点'}`,
+      ...(supplementList.length > 0 ? supplementList.slice(0, 2) : ['查漏：对比多份资料的差异点']),
+      '默写关键公式与定义，做最后一轮核对',
+      '整理易错题清单，考前 24 小时过一遍',
+    ]
     return {
       title: '补充版 · 路线',
       description: '完成核心后补齐次重点与易漏点',
-      items: [
-        `梳理 ${keyPoints.slice(2).join('、') || '次重点'}`,
-        '查漏：对比多份资料的差异点',
-        '默写关键公式与定义，做最后一轮核对',
-        '整理易错题清单，考前 24 小时过一遍',
-      ],
+      items: supplementItems,
     }
   }
 
@@ -262,11 +320,11 @@ export function generatePlan(input: PlanInput): PlanOutput {
   const dayBudget = Math.max(1, Math.round(hours / 4))
   return {
     title: '标准版 · 路线',
-    description: '时间充裕时按章节系统梳理',
+    description: `${intensity}策略：按章节系统梳理并滚动校准`,
     items: [
       `用 ${dayBudget} 天通读 ${keyPoints[0] || '第一章'}，建立主线`,
       `真题映射 ${keyPoints.slice(0, 3).join('、')} 知识点与题型结构`,
-      '待补齐目录后增强结构化复习',
+      input.readinessScore >= 70 ? '用错题回看验证高频考点掌握度' : '先补齐目录/范围/课件，再增强结构化复习',
       '结合考试范围做优先级裁剪',
       '考前两天做完整套卷模拟，定位薄弱章节',
     ],

@@ -11,13 +11,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String
-  password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  username               String
+  password               String
+  role                   String    @default("user")
+  passwordResetToken     String?
+  passwordResetExpiresAt DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   courses   Course[]
   history   HistoryRecord[]
@@ -110,12 +112,16 @@ model Plan {
 }
 
 model HistoryRecord {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String
-  courseName String
-  finalScore Int?
-  archivedAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  courseId        String
+  courseName      String
+  finalScore      Int?
+  keyPointsCount  Int      @default(0)
+  tasksTotal      Int      @default(0)
+  tasksDone       Int      @default(0)
+  snapshotSummary String   @default("[]")
+  archivedAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
