@@ -71,6 +71,12 @@ export const authApi = {
     api<{ token: string; user: any }>('/api/auth/register', { method: 'POST', body: data }),
   login: (data: { email: string; password: string }) =>
     api<{ token: string; user: any }>('/api/auth/login', { method: 'POST', body: data }),
+  forgotPassword: (data: { email: string }) =>
+    api<{ success: boolean; message: string; resetUrl?: string; expiresAt?: string }>('/api/auth/forgot-password', { method: 'POST', body: data }),
+  resetPassword: (data: { token: string; password: string }) =>
+    api<{ success: boolean; message: string }>('/api/auth/reset-password', { method: 'POST', body: data }),
+  startOAuth: (provider: 'wechat' | 'google' | 'apple') =>
+    api<{ configured: boolean; provider: string; url?: string; state?: string; message?: string }>('/api/auth/oauth/start', { method: 'POST', body: { provider } }),
   me: () => api<any>('/api/auth/me'),
 }
 
@@ -120,6 +126,11 @@ export const planApi = {
   generate: (courseId: string) =>
     api<any[]>(`/api/courses/${courseId}/plans`, { method: 'POST' }),
   list: (courseId: string) => api<any[]>(`/api/courses/${courseId}/plans`),
+}
+
+// === History ===
+export const historyApi = {
+  list: () => api<any[]>('/api/history'),
 }
 
 // === Health ===

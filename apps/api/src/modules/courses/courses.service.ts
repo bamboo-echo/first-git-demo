@@ -53,10 +53,44 @@ export class CoursesService {
   }
 
   async delete(userId: string, id: string) {
-    const course = await this.prisma.course.findUnique({ where: { id } })
+    const course = await this.prisma.course.findUnique({
+      where: { id },
+      include: {
+        tasks: true,
+        analyses: { orderBy: { generatedAt: 'desc' }, take: 1 },
+      },
+    })
     if (!course) throw new NotFoundException('课程不存在')
     if (course.userId !== userId) throw new ForbiddenException('无权操作')
+
+    const latestAnalysis = course.analyses?.[0]
+    const keyPoints = this.parseJson(latestAnalysis?.keyPoints, [])
+    const summary = this.parseJson(latestAnalysis?.summary, [])
+    const tasksTotal = course.tasks.length
+    const tasksDone = course.tasks.filter((task: any) => task.done).length
+
+    await this.prisma.historyRecord.create({
+      data: {
+        userId,
+        courseId: course.id,
+        courseName: course.name,
+        finalScore: latestAnalysis?.readinessScore ?? null,
+        keyPointsCount: keyPoints.length,
+        tasksTotal,
+        tasksDone,
+        snapshotSummary: JSON.stringify(summary),
+      },
+    })
+
     await this.prisma.course.delete({ where: { id } })
     return { success: true }
+  }
+
+  private parseJson(value: any, fallback: any) {
+    if (Array.isArray(value)) return value
+    if (typeof value === 'string') {
+      try { return JSON.parse(value) } catch { return fallback }
+    }
+    return fallback
   }
 }

@@ -14,6 +14,9 @@ type AuthContextValue = {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, username: string, password: string) => Promise<void>
+  forgotPassword: (email: string) => Promise<{ message: string; resetUrl?: string }>
+  resetPassword: (token: string, password: string) => Promise<{ message: string }>
+  startOAuth: (provider: 'wechat' | 'google' | 'apple') => Promise<{ configured: boolean; url?: string; message?: string }>
   logout: () => void
 }
 
@@ -56,13 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user)
   }, [])
 
+  const forgotPassword = useCallback(async (email: string) => {
+    return authApi.forgotPassword({ email })
+  }, [])
+
+  const resetPassword = useCallback(async (token: string, password: string) => {
+    return authApi.resetPassword({ token, password })
+  }, [])
+
+  const startOAuth = useCallback(async (provider: 'wechat' | 'google' | 'apple') => {
+    return authApi.startOAuth(provider)
+  }, [])
+
   const logout = useCallback(() => {
     clearToken()
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, forgotPassword, resetPassword, startOAuth, logout }}>
       {children}
     </AuthContext.Provider>
   )

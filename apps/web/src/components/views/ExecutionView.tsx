@@ -4,12 +4,17 @@ type ExecutionViewProps = {
   tasks: Task[]
   supplementList: string[]
   onToggleTask: (id: string) => void
+  onAddTask: (task: { title: string; detail: string; duration: string; priority: 'high' | 'medium'; mode: 'sprint' | 'standard' | 'supplement'; done: boolean; order: number }) => void
+  onRemoveTask: (id: string) => void
+  onChangeOrder?: (id: string, order: number) => void
 }
 
-export function ExecutionView({ tasks, supplementList, onToggleTask }: ExecutionViewProps) {
+export function ExecutionView({ tasks, supplementList, onToggleTask, onAddTask, onRemoveTask, onChangeOrder }: ExecutionViewProps) {
   const completed = tasks.filter((t) => t.done).length
   const total = tasks.length
   const percent = total === 0 ? 0 : Math.round((completed / total) * 100)
+  const orderedTasks = [...tasks].sort((a, b) => (a.order || 0) - (b.order || 0))
+  const nextOrder = tasks.length + 1
 
   return (
     <div className="view-content">
@@ -28,6 +33,51 @@ export function ExecutionView({ tasks, supplementList, onToggleTask }: Execution
             {completed} / {total} · {percent}%
           </span>
         </div>
+        <div className="quick-task-bar">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onAddTask({
+              title: '补一轮真题错点',
+              detail: '将当前错题对应知识点再过一遍',
+              duration: '20分钟',
+              priority: 'high',
+              mode: 'sprint',
+              done: false,
+              order: nextOrder,
+            })}
+          >
+            + 添加任务
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => {
+              const last = orderedTasks[orderedTasks.length - 1]
+              if (last) onRemoveTask(last.id)
+            }}
+            disabled={tasks.length === 0}
+          >
+            删除最后一项
+          </button>
+        </div>
+        <div className="task-reorder-bar">
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => {
+              const last = orderedTasks[orderedTasks.length - 1]
+              const first = orderedTasks[0]
+              if (last && first && onChangeOrder) {
+                onChangeOrder(last.id, 1)
+                onChangeOrder(first.id, orderedTasks.length)
+              }
+            }}
+            disabled={!onChangeOrder || tasks.length < 2}
+          >
+            首尾互换顺序
+          </button>
+        </div>
         <div className="progress-bar" style={{ height: 4, marginBottom: 8 }}>
           <div className="progress-fill" style={{ width: `${percent}%` }}></div>
         </div>
@@ -38,7 +88,7 @@ export function ExecutionView({ tasks, supplementList, onToggleTask }: Execution
               <span style={{ color: 'var(--ink-muted)' }}>暂无任务</span>
             </div>
           ) : (
-            tasks.map((task) => (
+            orderedTasks.map((task) => (
               <div key={task.id} className={`task-item ${task.done ? 'completed' : ''}`}>
                 <button
                   type="button"

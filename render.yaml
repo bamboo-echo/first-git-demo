@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: kaodian-radar-api
+    env: node
+    plan: free
+    rootDir: apps/api
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: AI_PROVIDER
+        value: local
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: WECHAT_OAUTH_CLIENT_ID
+        sync: false
+      - key: WECHAT_OAUTH_REDIRECT_URI
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URI
+        sync: false
+      - key: APPLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: APPLE_OAUTH_REDIRECT_URI
+        sync: false

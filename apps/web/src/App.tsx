@@ -30,6 +30,7 @@ function MainApp() {
     updateMaterial,
     removeMaterial,
     addTask,
+    setTaskOrder,
     toggleTask,
     removeTask,
     reAnalyze,
@@ -38,8 +39,15 @@ function MainApp() {
   if (authLoading) {
     return (
       <div className="auth-loading">
-        <div className="auth-loading-dot" />
-        <span>正在加载...</span>
+        <div className="auth-loading-card">
+          <div className="auth-loading-radar" aria-hidden="true">
+            <span className="auth-loading-ring" />
+            <span className="auth-loading-ring" />
+            <span className="auth-loading-dot" />
+          </div>
+          <strong>考点雷达正在启动</strong>
+          <span>同步账号与复习工作台...</span>
+        </div>
       </div>
     )
   }
@@ -52,14 +60,20 @@ function MainApp() {
     return (
       <div className="empty-state">
         <div className="empty-state-content">
+          <div className="empty-state-mark" aria-hidden="true">
+            <span />
+          </div>
+          <span className="empty-state-kicker">Workspace Empty</span>
           <h2>还没有课程</h2>
           <p>创建你的第一个复习课程开始使用</p>
-          <button
-            className="primary-btn"
-            onClick={() => createCourse('我的第一个课程')}
-          >
-            + 新建课程
-          </button>
+          <div className="empty-state-actions">
+            <button
+              className="primary-btn"
+              onClick={() => createCourse('我的第一个课程')}
+            >
+              + 新建课程
+            </button>
+          </div>
           <div className="empty-state-foot">
             <span>当前用户：{user.username}</span>
             <button className="link-btn" onClick={logout}>切换账号</button>
@@ -115,10 +129,11 @@ function MainApp() {
             onToggleTask={toggleTask}
             onAddTask={addTask}
             onRemoveTask={removeTask}
+            onChangeOrder={setTaskOrder}
           />
         )
       case 'history':
-        return <HistoryView courses={courses} onClear={() => {}} />
+        return <HistoryView courses={courses} activeCourseId={activeCourseId} onClear={() => setActiveTab('analysis')} />
       default:
         return null
     }

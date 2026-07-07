@@ -2,22 +2,40 @@ import type { CourseRecord } from '../../types'
 
 type HistoryViewProps = {
   courses: CourseRecord[]
+  activeCourseId: string
   onClear: () => void
 }
 
-export function HistoryView({ courses, onClear }: HistoryViewProps) {
-  // 简化的历史视图：展示已分析的课程快照
-  const records = courses
-    .filter((c) => c.analysis)
-    .map((c) => ({
-      id: c.id,
-      courseName: c.course.name,
-      archivedAt: c.analysis!.generatedAt,
-      readiness: c.analysis!.readinessScore,
-      keyPointsCount: c.analysis!.keyPoints.length,
-      tasksTotal: c.tasks.length,
-      tasksDone: c.tasks.filter((t) => t.done).length,
-    }))
+export function HistoryView({ courses, activeCourseId, onClear }: HistoryViewProps) {
+  const activeCourse = courses.find((course) => course.id === activeCourseId)
+  const persistedRecords = activeCourse?.history || []
+  const liveRecord = activeCourse?.analysis
+    ? [{
+      id: `${activeCourse.id}-live`,
+      courseName: activeCourse.course.name,
+      archivedAt: activeCourse.analysis.generatedAt,
+      readiness: activeCourse.analysis.readinessScore,
+      keyPointsCount: activeCourse.analysis.keyPoints.length,
+      tasksTotal: activeCourse.tasks.length,
+      tasksDone: activeCourse.tasks.filter((task) => task.done).length,
+      snapshotSummary: activeCourse.analysis.summary,
+      isLive: true,
+    }]
+    : []
+  const records = [
+    ...liveRecord,
+    ...persistedRecords.map((record) => ({
+      id: record.id,
+      courseName: record.courseName,
+      archivedAt: record.archivedAt,
+      readiness: record.finalScore ?? 0,
+      keyPointsCount: record.keyPointsCount,
+      tasksTotal: record.tasksTotal,
+      tasksDone: record.tasksDone,
+      snapshotSummary: record.snapshotSummary || [],
+      isLive: false,
+    })),
+  ]
 
   if (records.length === 0) {
     return (
@@ -55,6 +73,7 @@ export function HistoryView({ courses, onClear }: HistoryViewProps) {
       <section className="section">
         <div className="section-header">
           <h2 className="section-title">分析快照 · {records.length} 条</h2>
+          <button type="button" className="text-button" onClick={onClear}>清空筛选</button>
         </div>
         <div className="history-list">
           {records.map((record) => {
@@ -73,10 +92,17 @@ export function HistoryView({ courses, onClear }: HistoryViewProps) {
                   </svg>
                 </div>
                 <div className="history-info">
-                  <div className="history-title">{record.courseName}</div>
+                  <div className="history-title">{record.courseName}{record.isLive ? ' · 当前版本' : ''}</div>
                   <div className="history-meta">
                     {date} · 完成 {record.tasksDone}/{record.tasksTotal} · 识别 {record.keyPointsCount} 个考点
                   </div>
+                  {record.snapshotSummary.length > 0 && (
+                    <div className="history-summary">
+                      {record.snapshotSummary.slice(0, 2).map((item, index) => (
+                        <span key={index}>{item}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="history-score">
                   <div className="history-score-value">{record.readiness}<span style={{ color: 'var(--ink-muted)', fontSize: 13, fontWeight: 500 }}>%</span></div>

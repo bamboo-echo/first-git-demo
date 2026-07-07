@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import type { CourseState, AppTab } from '../types'
-import { coursesApi, materialsApi, tasksApi, analysisApi, planApi, getStoredUser } from '../utils/api'
+import { coursesApi, materialsApi, tasksApi, analysisApi, planApi, getStoredUser, historyApi } from '../utils/api'
 
 export type CourseRecord = {
   id: string
@@ -9,6 +9,7 @@ export type CourseRecord = {
   tasks: any[]
   analysis?: any
   plans?: any[]
+  history?: any[]
   updatedAt: string
 }
 
@@ -91,7 +92,10 @@ export function useCourseState() {
   const refreshActive = useCallback(async () => {
     if (!activeCourseId) return
     try {
-      const detail = await coursesApi.get(activeCourseId)
+      const [detail, history] = await Promise.all([
+        coursesApi.get(activeCourseId),
+        historyApi.list(),
+      ])
       setCourses((prev) =>
         prev.map((c) =>
           c.id === activeCourseId
@@ -102,6 +106,7 @@ export function useCourseState() {
                 tasks: detail.tasks || [],
                 analysis: detail.analyses?.[0] || null,
                 plans: detail.plans || [],
+                history: (history || []).filter((item: any) => item.courseId === activeCourseId),
                 updatedAt: detail.updatedAt,
               }
             : c,
@@ -210,6 +215,14 @@ export function useCourseState() {
     )
   }, [activeCourseId])
 
+  const setTaskOrder = useCallback(async (id: string, order: number) => {
+    if (!activeCourseId) return
+    const updated = await tasksApi.update(activeCourseId, id, { order })
+    setCourses((prev) =>
+      prev.map((c) => (c.id === activeCourseId ? { ...c, tasks: c.tasks.map((t) => (t.id === id ? updated : t)) } : c)),
+    )
+  }, [activeCourseId])
+
   const toggleTask = useCallback(async (id: string) => {
     if (!activeCourseId) return
     const updated = await tasksApi.toggle(activeCourseId, id)
@@ -234,7 +247,6 @@ export function useCourseState() {
       setCourses((prev) =>
         prev.map((c) => (c.id === activeCourseId ? { ...c, analysis: result } : c)),
       )
-      // 同时生成计划
       await planApi.generate(activeCourseId)
       await refreshActive()
     } finally {
@@ -267,6 +279,7 @@ export function useCourseState() {
     updateMaterial,
     removeMaterial,
     addTask,
+    setTaskOrder,
     toggleTask,
     removeTask,
     reAnalyze,

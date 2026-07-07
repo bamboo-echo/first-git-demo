@@ -71,6 +71,17 @@ export function PlanView({ plans, derived, onGenerate }: PlanViewProps) {
               重新生成
             </button>
           </div>
+          <div className="plan-recommendation">
+            当前推荐：
+            <strong>
+              {derived.readinessScore < 45 || derived.summary.length <= 2
+                ? '极速版'
+                : derived.readinessScore >= 70 && derived.keyPoints.length >= 5
+                  ? '补充版'
+                  : '标准版'}
+            </strong>
+            <span> · 根据准备度与资料完整度自动判断</span>
+          </div>
           <ol className="plan-steps">
             {currentPlan.items.map((item, idx) => (
               <li key={idx} className="plan-step">

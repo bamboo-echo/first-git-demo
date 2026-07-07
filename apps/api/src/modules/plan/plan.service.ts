@@ -21,6 +21,7 @@ export class PlanService {
     const latest = course.analyses?.[0]
     const keyPoints = latest ? this.parseJson(latest.keyPoints, []) : []
     const readinessScore = latest?.readinessScore ?? 0
+    const supplementList = latest ? this.parseJson(latest.supplementList, []) : []
 
     const modes: Array<'sprint' | 'standard' | 'supplement'> = ['sprint', 'standard', 'supplement']
     const plans = modes.map((mode) => {
@@ -30,6 +31,7 @@ export class PlanService {
         reviewHours: course.reviewHours,
         keyPoints,
         readinessScore,
+        supplementList,
         mode,
       } as PlanInput)
       return { mode, ...result }
@@ -50,6 +52,27 @@ export class PlanService {
         }),
       ),
     )
+
+    const taskCount = await this.prisma.task.count({ where: { courseId } })
+    if (taskCount === 0) {
+      const recommendedMode = this.getRecommendedMode(course.reviewHours, readinessScore)
+      const recommendedPlan = plans.find((plan) => plan.mode === recommendedMode) || plans[0]
+      await Promise.all(
+        recommendedPlan.items.map((item, index) =>
+          this.prisma.task.create({
+            data: {
+              courseId,
+              title: item,
+              detail: `${recommendedPlan.title} · 第 ${index + 1} 步`,
+              duration: index === 0 ? '45分钟' : '30分钟',
+              priority: index < 2 ? 'high' : 'medium',
+              mode: recommendedPlan.mode,
+              order: index + 1,
+            },
+          }),
+        ),
+      )
+    }
 
     return created.map((c: any) => this.format(c))
   }
@@ -80,5 +103,12 @@ export class PlanService {
       try { return JSON.parse(value) } catch { return fallback }
     }
     return fallback
+  }
+
+  private getRecommendedMode(reviewHours: string, readinessScore: number): 'sprint' | 'standard' | 'supplement' {
+    const hours = Number.parseFloat((reviewHours || '8').match(/\d+(?:\.\d+)?/)?.[0] || '8')
+    if (hours <= 6 || readinessScore < 45) return 'sprint'
+    if (hours >= 18 && readinessScore >= 70) return 'supplement'
+    return 'standard'
   }
 }

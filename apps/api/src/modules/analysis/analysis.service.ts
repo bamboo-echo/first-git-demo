@@ -29,6 +29,7 @@ export class AnalysisService {
       notes: course.notes,
       materials: course.materials.map((m: any) => ({
         title: m.title,
+        description: m.description,
         category: m.category,
         status: m.status,
       })),
@@ -50,6 +51,19 @@ export class AnalysisService {
         supplementList: JSON.stringify(result.supplementList),
         summary: JSON.stringify(result.summary),
         aiProvider: result.aiProvider,
+      },
+    })
+
+    await this.prisma.historyRecord.create({
+      data: {
+        userId,
+        courseId,
+        courseName: course.name,
+        finalScore: result.readinessScore,
+        keyPointsCount: result.keyPoints.length,
+        tasksTotal: course.tasks.length,
+        tasksDone: course.tasks.filter((task: any) => task.done).length,
+        snapshotSummary: JSON.stringify(result.summary),
       },
     })
 

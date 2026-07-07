@@ -8,6 +8,7 @@ import { TasksModule } from './modules/tasks/tasks.module'
 import { AnalysisModule } from './modules/analysis/analysis.module'
 import { PlanModule } from './modules/plan/plan.module'
 import { AiModule } from './modules/ai/ai.module'
+import { HistoryModule } from './modules/history/history.module'
 import { HealthController } from './health.controller'
 
 @Module({
@@ -21,6 +22,7 @@ import { HealthController } from './health.controller'
     TasksModule,
     AnalysisModule,
     PlanModule,
+    HistoryModule,
   ],
   controllers: [HealthController],
 })
