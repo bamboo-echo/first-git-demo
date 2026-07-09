@@ -86,7 +86,11 @@ export type HistoryRecord = {
   courseId: string
   courseName: string
   archivedAt: string
-  finalScore?: number
+  finalScore: number | null
+  keyPointsCount: number
+  tasksTotal: number
+  tasksDone: number
+  snapshotSummary: string[]
 }
 
 export type AuthResponse = {

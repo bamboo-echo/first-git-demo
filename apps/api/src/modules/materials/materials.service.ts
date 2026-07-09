@@ -39,12 +39,12 @@ export class MaterialsService {
 
   async update(userId: string, courseId: string, id: string, data: Partial<CreateMaterialDto>) {
     await this.assertCourseOwner(userId, courseId)
-    return this.prisma.material.update({ where: { id }, data })
+    return this.prisma.material.update({ where: { id_courseId: { id, courseId } }, data })
   }
 
   async delete(userId: string, courseId: string, id: string) {
     await this.assertCourseOwner(userId, courseId)
-    await this.prisma.material.delete({ where: { id } })
+    await this.prisma.material.delete({ where: { id_courseId: { id, courseId } } })
     return { success: true }
   }
 }

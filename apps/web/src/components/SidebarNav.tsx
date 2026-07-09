@@ -1,14 +1,12 @@
 import type { ReactNode } from 'react'
-import type { AppTab, CourseRecord } from '../types'
-
-type User = { id: string; email: string; username: string; role: string }
+import type { AppTab, CourseRecord, AppUser } from '../types'
 
 type SidebarNavProps = {
   courses: CourseRecord[]
   activeCourseId: string
   activeTab: AppTab
   progressPercent: number
-  user?: User | null
+  user?: AppUser | null
   onTabChange: (tab: AppTab) => void
   onSwitchCourse: (id: string) => void
   onCreateCourse: () => void
@@ -84,10 +82,12 @@ export function SidebarNav({
   activeCourseId,
   activeTab,
   progressPercent,
+  user,
   onTabChange,
   onSwitchCourse,
   onCreateCourse,
   onDeleteCourse,
+  onLogout,
 }: SidebarNavProps) {
   return (
     <nav className="sidebar-nav">

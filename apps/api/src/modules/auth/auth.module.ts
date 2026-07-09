@@ -12,10 +12,16 @@ import { JwtStrategy } from './jwt/jwt.strategy'
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'kaodian-radar-default-secret',
-        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') || '7d' },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET')
+        if (!secret || secret.length < 32) {
+          throw new Error('JWT_SECRET 必须配置且长度不小于 32 位')
+        }
+        return {
+          secret,
+          signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') || '7d' },
+        }
+      },
     }),
   ],
   providers: [AuthService, JwtStrategy],

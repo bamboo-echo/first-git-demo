@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import type { CourseState, AppTab } from '../types'
+import type { CourseState, AppTab, DerivedState } from '../types'
 import { coursesApi, materialsApi, tasksApi, analysisApi, planApi, getStoredUser, historyApi } from '../utils/api'
 
 export type CourseRecord = {
@@ -102,10 +102,10 @@ export function useCourseState() {
             ? {
                 ...c,
                 course: this_courseFromApi(detail),
-                materials: detail.materials || [],
+                materials: (detail.materials || []).map((m: any) => ({ ...m, status: m.status || 'ready' })),
                 tasks: detail.tasks || [],
-                analysis: detail.analyses?.[0] || null,
-                plans: detail.plans || [],
+                analysis: detail.analyses?.[0] || c.analysis || null,
+                plans: detail.plans || c.plans || [],
                 history: (history || []).filter((item: any) => item.courseId === activeCourseId),
                 updatedAt: detail.updatedAt,
               }
@@ -114,6 +114,7 @@ export function useCourseState() {
       )
     } catch (err: any) {
       console.error('加载课程详情失败', err)
+      setError(err.message || '加载课程详情失败')
     }
   }, [activeCourseId])
 
@@ -128,25 +129,30 @@ export function useCourseState() {
   )
 
   // 派生数据
-  const derived = useMemo(() => {
+  const derived: DerivedState = useMemo(() => {
     if (!activeCourse) {
       return {
-        questionTypes: [] as string[],
-        keyPoints: [] as string[],
-        evidence: [] as string[],
+        questionTypes: [],
+        keyPoints: [],
+        evidence: [],
         readinessScore: 0,
-        supplementList: [] as string[],
-        summary: [] as string[],
+        supplementList: [],
+        summary: [],
       }
     }
     const a = activeCourse.analysis
+    const toStringArray = (arr: any): string[] => {
+      if (!Array.isArray(arr)) return []
+      return arr.map((item) => (typeof item === 'string' ? item : item?.title || String(item))).filter(Boolean)
+    }
+    const summary = Array.isArray(a?.summary) ? toStringArray(a.summary) : []
     return {
-      questionTypes: a?.questionTypes || [],
-      keyPoints: a?.keyPoints || [],
-      evidence: a?.evidence || [],
-      readinessScore: a?.readinessScore || 0,
-      supplementList: a?.supplementList || [],
-      summary: a?.summary || [],
+      questionTypes: toStringArray(a?.questionTypes),
+      keyPoints: toStringArray(a?.keyPoints),
+      evidence: toStringArray(a?.evidence),
+      readinessScore: typeof a?.readinessScore === 'number' ? a.readinessScore : 0,
+      supplementList: toStringArray(a?.supplementList),
+      summary,
     }
   }, [activeCourse])
 
@@ -159,24 +165,33 @@ export function useCourseState() {
     return created
   }, [])
 
-  const archiveCourse = useCallback(async () => {
-    if (!activeCourseId) return
-    await coursesApi.delete(activeCourseId)
-    setCourses((prev) => prev.filter((c) => c.id !== activeCourseId))
-    setActiveCourseId((prev) => {
-      const remaining = courses.filter((c) => c.id !== activeCourseId)
-      return remaining[0]?.id || ''
-    })
+  const archiveCourse = useCallback(async (id?: string) => {
+    const targetId = id || activeCourseId
+    if (!targetId) return
+    try {
+      setError(null)
+      await coursesApi.delete(targetId)
+      setCourses((prev) => prev.filter((c) => c.id !== targetId))
+      setActiveCourseId((prev) => {
+        const remaining = courses.filter((c) => c.id !== targetId)
+        return remaining[0]?.id || ''
+      })
+    } catch (err: any) {
+      setError(err.message || '归档课程失败')
+    }
   }, [activeCourseId, courses])
 
   const updateCourse = useCallback(async (patch: Partial<CourseState>) => {
     if (!activeCourseId) return
     isUpdatingRef.current = true
     try {
+      setError(null)
       const updated = await coursesApi.update(activeCourseId, patch)
       setCourses((prev) =>
         prev.map((c) => (c.id === activeCourseId ? { ...c, course: this_courseFromApi(updated), updatedAt: updated.updatedAt } : c)),
       )
+    } catch (err: any) {
+      setError(err.message || '更新课程失败')
     } finally {
       setTimeout(() => { isUpdatingRef.current = false }, 100)
     }
@@ -242,6 +257,7 @@ export function useCourseState() {
   const reAnalyze = useCallback(async () => {
     if (!activeCourseId) return
     setLoading(true)
+    setError(null)
     try {
       const result = await analysisApi.trigger(activeCourseId)
       setCourses((prev) =>
@@ -249,6 +265,8 @@ export function useCourseState() {
       )
       await planApi.generate(activeCourseId)
       await refreshActive()
+    } catch (err: any) {
+      setError(err.message || '分析失败')
     } finally {
       setLoading(false)
     }
