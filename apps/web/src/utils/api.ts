@@ -41,18 +41,20 @@ type Material = {
   category: string; status: string; createdAt: string
 }
 type Task = {
-  id: string; courseId: string; title: string; description?: string; status: string;
-  order: number; mode?: string; createdAt: string
+  id: string; courseId: string; title: string; detail: string; duration: string;
+  done: boolean; priority: 'high' | 'medium'; mode: 'sprint' | 'standard' | 'supplement';
+  order: number; createdAt: string
 }
 type Analysis = {
-  id: string; courseId: string; keyPoints: any[]; questionTypes: any[];
-  summary: string; createdAt: string
+  id: string; courseId: string; keyPoints: string[]; questionTypes: string[];
+  evidence: string[]; supplementList: string[]; summary: string[];
+  readinessScore: number; generatedAt: string
 }
-type Plan = { id: string; courseId: string; mode: string; steps: any[]; createdAt: string }
+type Plan = { id: string; courseId: string; mode: 'sprint' | 'standard' | 'supplement'; items: string[]; createdAt: string }
 type HistoryRecord = {
   id: string; userId: string; courseId: string; courseName: string;
   keyPointsCount: number; tasksTotal: number; tasksDone: number;
-  snapshotSummary: string; createdAt: string
+  snapshotSummary: string[]; createdAt: string
 }
 
 class ApiError extends Error {
@@ -91,7 +93,7 @@ export async function api<T = any>(_path: string, _opts: any = {}): Promise<T> {
 }
 
 // ============ 简化分析引擎 ============
-function generateKeyPoints(course: Course, materials: Material[]) {
+function generateKeyPoints(course: Course, materials: Material[]): string[] {
   // 基于课程名和资料生成考点
   const basePoints: Record<string, string[]> = {
     '数据结构': ['线性表的顺序与链式存储', '栈与队列的应用场景', '二叉树遍历（前/中/后/层序）', '图的遍历与最短路径', '排序算法复杂度对比', '哈希表与冲突处理', '递归与分治思想'],
@@ -111,62 +113,58 @@ function generateKeyPoints(course: Course, materials: Material[]) {
   if (matched.length === 0) {
     matched = ['核心概念与定义', '关键公式与推导', '典型例题与解法', '常见易错点', '章节重点梳理', '综合应用题分析']
   }
-  // 根据资料数量调整权重
-  const materialBoost = materials.length
-  return matched.map((title, i) => {
-    const weight = Math.max(1, 10 - i + (i < 3 ? materialBoost : 0))
-    return {
-      id: uid(),
-      title,
-      weight,
-      category: i < 3 ? '高频考点' : i < 5 ? '中频考点' : '低频考点',
-      sources: materials.slice(0, 2).map((m) => m.title),
-    }
-  }).sort((a, b) => b.weight - a.weight)
+  // 资料越多，覆盖度越高，但考点列表保持字符串数组
+  return matched.slice(0, Math.max(4, Math.min(8, materials.length + 4)))
 }
 
-function generateQuestionTypes(course: Course) {
+function generateQuestionTypes(course: Course): string[] {
   const name = course.name
   if (name.includes('数据结构') || name.includes('算法')) {
     return [
-      { type: '选择题', count: 10, weight: 20 },
-      { type: '填空题', count: 5, weight: 15 },
-      { type: '应用题', count: 4, weight: 40 },
-      { type: '算法设计题', count: 2, weight: 25 },
+      '选择题 20%',
+      '填空题 15%',
+      '应用题 40%',
+      '算法设计题 25%',
     ]
   }
   return [
-    { type: '选择题', count: 15, weight: 30 },
-    { type: '填空题', count: 8, weight: 20 },
-    { type: '简答题', count: 5, weight: 30 },
-    { type: '应用题', count: 3, weight: 20 },
+    '选择题 30%',
+    '填空题 20%',
+    '简答题 30%',
+    '应用题 20%',
   ]
 }
 
-function generatePlans(course: Course, keyPoints: any[]): Plan[] {
+function generateEvidence(materials: Material[]): string[] {
+  const labels = materials.map((m) => `${m.title}（${m.category}）`)
+  return labels.length > 0 ? labels : ['系统默认考点库']
+}
+
+function generateSupplementList(course: Course): string[] {
+  const scope = course.examScope || ''
+  if (!scope) return ['完善考试范围说明', '补充历年真题', '整理课堂笔记']
+  return scope.split(/[,，;；\n]/).filter((s) => s.trim()).slice(0, 5).map((s) => `补充：${s.trim()}`)
+}
+
+function generateReadinessScore(materials: Material[], keyPoints: string[]): number {
+  const readyCount = materials.filter((m) => m.status === 'ready').length
+  const materialScore = Math.min(40, readyCount * 10)
+  const coverageScore = Math.min(40, keyPoints.length * 5)
+  return Math.min(95, 20 + materialScore + coverageScore)
+}
+
+function generatePlans(course: Course, keyPoints: string[]): Plan[] {
   const top3 = keyPoints.slice(0, 3)
   const top5 = keyPoints.slice(0, 5)
   const all = keyPoints
-  const mk = (mode: string, points: any[], desc: (p: any, i: number) => any) => ({
+  const mk = (mode: 'sprint' | 'standard' | 'supplement', points: string[], makeItem: (p: string, i: number) => string): Plan => ({
     id: uid(), courseId: course.id, mode, createdAt: now(),
-    steps: points.map((p, i) => desc(p, i)),
+    items: points.map((p, i) => makeItem(p, i)),
   })
   return [
-    mk('极速版', top3, (p, i) => ({
-      id: uid(), order: i + 1, title: `攻克：${p.title}`,
-      description: `聚焦 ${p.category}，快速过一遍核心内容`,
-      estimated: '30 分钟', done: false,
-    })),
-    mk('标准版', top5, (p, i) => ({
-      id: uid(), order: i + 1, title: `精修：${p.title}`,
-      description: `理解原理 + 做配套例题`,
-      estimated: '60 分钟', done: false,
-    })),
-    mk('补充版', all, (p, i) => ({
-      id: uid(), order: i + 1, title: `巩固：${p.title}`,
-      description: `查漏补缺，整理错题`,
-      estimated: '45 分钟', done: false,
-    })),
+    mk('sprint', top3, (p) => `极速攻克：${p}`),
+    mk('standard', top5, (p) => `系统精修：${p}`),
+    mk('supplement', all, (p) => `查漏补缺：${p}`),
   ]
 }
 
@@ -251,7 +249,18 @@ export const coursesApi = {
     const all = read<Course[]>(K.courses, [])
     const c = all.find((x) => x.id === id)
     if (!c) throw new ApiError(404, '课程不存在')
-    return courseFromApi(c)
+    const materials = read<Material[]>(K.materials, []).filter((m) => m.courseId === id)
+    const tasks = read<Task[]>(K.tasks, []).filter((t) => t.courseId === id).sort((a, b) => a.order - b.order)
+    const analyses = read<Analysis[]>(K.analyses, []).filter((a) => a.courseId === id)
+      .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())
+    const plans = read<Plan[]>(K.plans, []).filter((p) => p.courseId === id)
+    return {
+      ...courseFromApi(c),
+      materials,
+      tasks,
+      analyses,
+      plans,
+    }
   },
   async create(data: any) {
     await delay()
@@ -289,12 +298,15 @@ export const coursesApi = {
     const analyses = read<Analysis[]>(K.analyses, []).filter((a) => a.courseId === id)
     if (course && user) {
       const history = read<HistoryRecord[]>(K.history, [])
+      const latestAnalysis = analyses[0]
       history.push({
         id: uid(), userId: user.id, courseId: id, courseName: course.name,
-        keyPointsCount: analyses[0]?.keyPoints.length || 0,
+        keyPointsCount: latestAnalysis?.keyPoints.length || 0,
         tasksTotal: tasks.length,
-        tasksDone: tasks.filter((t) => t.status === 'done').length,
-        snapshotSummary: `${course.name} · ${materials.length} 份资料 · ${tasks.length} 个任务`,
+        tasksDone: tasks.filter((t) => t.done).length,
+        snapshotSummary: latestAnalysis?.summary?.length
+          ? latestAnalysis.summary.slice(0, 2)
+          : [`${course.name} · ${materials.length} 份资料 · ${tasks.length} 个任务`],
         createdAt: now(),
       })
       write(K.history, history)
@@ -363,10 +375,12 @@ export const tasksApi = {
     const t: Task = {
       id: uid(), courseId,
       title: data.title || '新任务',
-      description: data.description || '',
-      status: data.status || 'pending',
+      detail: data.detail || '',
+      duration: data.duration || '30分钟',
+      done: data.done ?? false,
+      priority: data.priority || 'medium',
       order: data.order ?? order,
-      mode: data.mode,
+      mode: data.mode || 'standard',
       createdAt: now(),
     }
     all.push(t)
@@ -387,7 +401,7 @@ export const tasksApi = {
     const all = read<Task[]>(K.tasks, [])
     const idx = all.findIndex((t) => t.id === id && t.courseId === courseId)
     if (idx < 0) throw new ApiError(404, '任务不存在')
-    all[idx].status = all[idx].status === 'done' ? 'pending' : 'done'
+    all[idx].done = !all[idx].done
     write(K.tasks, all)
     return all[idx]
   },
@@ -409,11 +423,23 @@ export const analysisApi = {
     const materials = read<Material[]>(K.materials, []).filter((m) => m.courseId === courseId)
     const keyPoints = generateKeyPoints(course, materials)
     const questionTypes = generateQuestionTypes(course)
+    const evidence = generateEvidence(materials)
+    const supplementList = generateSupplementList(course)
+    const readinessScore = generateReadinessScore(materials, keyPoints)
+    const generatedAt = now()
     const analysis: Analysis = {
       id: uid(), courseId,
-      keyPoints, questionTypes,
-      summary: `基于 ${materials.length} 份资料，识别出 ${keyPoints.length} 个考点。建议优先复习前 3 个高频考点。`,
-      createdAt: now(),
+      keyPoints,
+      questionTypes,
+      evidence,
+      supplementList,
+      summary: [
+        `基于 ${materials.length} 份资料，识别出 ${keyPoints.length} 个考点`,
+        `当前准备度约 ${readinessScore}%，建议优先复习前 3 个高频考点`,
+        `识别高频题型 ${questionTypes.length} 类，可作为复习方向参考`,
+      ],
+      readinessScore,
+      generatedAt,
     }
     const all = read<Analysis[]>(K.analyses, [])
     all.push(analysis)
@@ -423,14 +449,15 @@ export const analysisApi = {
     const allPlans = read<Plan[]>(K.plans, [])
     write(K.plans, [...allPlans.filter((p) => p.courseId !== courseId), ...plans])
     // 同步生成任务（基于标准版计划）
-    const stdPlan = plans.find((p) => p.mode === '标准版')
+    const stdPlan = plans.find((p) => p.mode === 'standard')
     if (stdPlan) {
       const allTasks = read<Task[]>(K.tasks, [])
       write(K.tasks, [
         ...allTasks.filter((t) => t.courseId !== courseId),
-        ...stdPlan.steps.map((s, i) => ({
-          id: s.id, courseId, title: s.title, description: s.description,
-          status: 'pending', order: i + 1, mode: '标准版', createdAt: now(),
+        ...stdPlan.items.map((item, i) => ({
+          id: uid(), courseId, title: item, detail: '按规划完成对应考点复习',
+          duration: '45分钟', done: false, priority: i < 2 ? 'high' : 'medium' as const,
+          order: i + 1, mode: 'standard' as const, createdAt: now(),
         })),
       ])
     }
@@ -440,14 +467,14 @@ export const analysisApi = {
     await delay()
     const all = read<Analysis[]>(K.analyses, [])
     const list = all.filter((a) => a.courseId === courseId).sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())
     return list[0] || null
   },
   async history(courseId: string) {
     await delay()
     const all = read<Analysis[]>(K.analyses, [])
     return all.filter((a) => a.courseId === courseId).sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())
   },
 }
 
@@ -460,7 +487,7 @@ export const planApi = {
     if (!course) throw new ApiError(404, '课程不存在')
     const analyses = read<Analysis[]>(K.analyses, [])
     const analysis = analyses.filter((a) => a.courseId === courseId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+      .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime())[0]
     const keyPoints = analysis?.keyPoints || generateKeyPoints(course, [])
     const plans = generatePlans(course, keyPoints)
     const allPlans = read<Plan[]>(K.plans, [])

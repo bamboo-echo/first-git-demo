@@ -1,14 +1,22 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
+function safeErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  return '操作失败'
+}
+
 type AuthViewProps = {
   onSuccess?: () => void
 }
 
 export function AuthView(_props: AuthViewProps) {
   const { login, register, forgotPassword, resetPassword, startOAuth } = useAuth()
-  const search = new URLSearchParams(window.location.search)
-  const initialResetToken = search.get('resetToken') || ''
+  const initialResetToken = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    return new URLSearchParams(window.location.search).get('resetToken') || ''
+  }, [])
   const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset'>(initialResetToken ? 'reset' : 'login')
   const [email, setEmail] = useState('')
   const [nickname, setNickname] = useState('')
@@ -47,8 +55,8 @@ export function AuthView(_props: AuthViewProps) {
         return
       }
       setNotice(result.message || '当前环境尚未完成第三方登录配置')
-    } catch (err: any) {
-      setError(err.message || '第三方登录启动失败')
+    } catch (err) {
+      setError(safeErrorMessage(err))
     }
   }
 
@@ -82,8 +90,8 @@ export function AuthView(_props: AuthViewProps) {
         setConfirmPassword('')
         handleModeChange('login')
       }
-    } catch (err: any) {
-      setError(err.message || '操作失败')
+    } catch (err) {
+      setError(safeErrorMessage(err))
     } finally {
       setLoading(false)
     }

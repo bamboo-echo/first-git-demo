@@ -38,18 +38,19 @@ export class TasksService {
 
   async update(userId: string, courseId: string, id: string, dto: UpdateTaskDto) {
     await this.assertCourseOwner(userId, courseId)
-    return this.prisma.task.update({ where: { id }, data: dto })
+    return this.prisma.task.update({ where: { id_courseId: { id, courseId } }, data: dto })
   }
 
   async toggle(userId: string, courseId: string, id: string) {
     await this.assertCourseOwner(userId, courseId)
-    const task = await this.prisma.task.findUnique({ where: { id } })
-    return this.prisma.task.update({ where: { id }, data: { done: !task.done } })
+    const task = await this.prisma.task.findUnique({ where: { id_courseId: { id, courseId } } })
+    if (!task) throw new NotFoundException('任务不存在')
+    return this.prisma.task.update({ where: { id_courseId: { id, courseId } }, data: { done: !task.done } })
   }
 
   async delete(userId: string, courseId: string, id: string) {
     await this.assertCourseOwner(userId, courseId)
-    await this.prisma.task.delete({ where: { id } })
+    await this.prisma.task.delete({ where: { id_courseId: { id, courseId } } })
     return { success: true }
   }
 }

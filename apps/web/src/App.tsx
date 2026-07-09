@@ -101,7 +101,7 @@ function MainApp() {
   const renderView = () => {
     switch (activeTab) {
       case 'course':
-        return <CourseView course={course} onChange={updateCourse} />
+        return <CourseView course={course} onChange={(field, value) => updateCourse({ [field]: value })} />
       case 'materials':
         return (
           <MaterialsView
@@ -110,7 +110,7 @@ function MainApp() {
             draftMaterials={draftMaterials}
             parseProgress={null}
             onAddMaterialWithFile={(_category, fileName) =>
-              addMaterial({ title: fileName, category: _category, status: 'draft', format: 'PDF' })
+              addMaterial({ title: fileName || '未命名资料', category: _category, status: 'draft', format: 'PDF' })
             }
             onUploadFile={(_file, _category) => {}}
             onPromote={(id) => updateMaterial(id, { status: 'ready' })}
