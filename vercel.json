@@ -3,5 +3,10 @@
   "buildCommand": "npm run build --workspace=apps/web",
   "outputDirectory": "apps/web/dist",
   "installCommand": "npm install",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "functions": {
+    "api/**/*": {
+      "exclude": true
+    }
+  }
 }
