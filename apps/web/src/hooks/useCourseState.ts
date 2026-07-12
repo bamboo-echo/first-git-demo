@@ -172,7 +172,7 @@ export function useCourseState() {
       setError(null)
       await coursesApi.delete(targetId)
       setCourses((prev) => prev.filter((c) => c.id !== targetId))
-      setActiveCourseId((prev) => {
+      setActiveCourseId((_prev) => {
         const remaining = courses.filter((c) => c.id !== targetId)
         return remaining[0]?.id || ''
       })

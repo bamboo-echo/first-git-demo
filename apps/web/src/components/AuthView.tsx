@@ -12,7 +12,7 @@ type AuthViewProps = {
 }
 
 export function AuthView(_props: AuthViewProps) {
-  const { login, register, forgotPassword, resetPassword, startOAuth } = useAuth()
+  const { login, register, forgotPassword, resetPassword, startOAuth, loginAsGuest } = useAuth()
   const initialResetToken = useMemo(() => {
     if (typeof window === 'undefined') return ''
     return new URLSearchParams(window.location.search).get('resetToken') || ''
@@ -295,6 +295,15 @@ export function AuthView(_props: AuthViewProps) {
             </span>
           </button>
         </form>
+
+        <div className="auth-guest-entry">
+          <div className="auth-guest-divider"><span>或者</span></div>
+          <button type="button" className="auth-guest-btn" onClick={loginAsGuest}>
+            <span className="auth-guest-icon">🚀</span>
+            <span>免登录直接体验</span>
+          </button>
+          <p className="auth-guest-hint">游客数据仅保存在本地浏览器，退出后自动清除</p>
+        </div>
 
         <div className="auth-foot">
           {mode === 'login' ? (

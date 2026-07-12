@@ -13,16 +13,9 @@ const modes: { value: PlanMode; label: string; desc: string; tag: string }[] = [
   { value: 'supplement', label: '补充版', desc: '完成核心后补齐次重点与易漏点', tag: '查漏补缺' },
 ]
 
-const modeLabelMap: Record<PlanMode, string> = {
-  sprint: '极速版',
-  standard: '标准版',
-  supplement: '补充版',
-}
-
 export function PlanView({ plans, derived, onGenerate }: PlanViewProps) {
   const [activeMode, setActiveMode] = useState<PlanMode>('sprint')
   const currentPlan = plans.find((p) => p.mode === activeMode)
-  const currentMode = modes.find((m) => m.value === activeMode)
 
   return (
     <div className="view-content">

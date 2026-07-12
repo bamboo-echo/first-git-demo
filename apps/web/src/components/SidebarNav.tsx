@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { AppTab, CourseRecord, AppUser } from '../types'
+import { ThemeSwitcher } from './ThemeSwitcher'
 
 type SidebarNavProps = {
   courses: CourseRecord[]
@@ -7,6 +8,7 @@ type SidebarNavProps = {
   activeTab: AppTab
   progressPercent: number
   user?: AppUser | null
+  isGuest?: boolean
   onTabChange: (tab: AppTab) => void
   onSwitchCourse: (id: string) => void
   onCreateCourse: () => void
@@ -83,6 +85,7 @@ export function SidebarNav({
   activeTab,
   progressPercent,
   user,
+  isGuest,
   onTabChange,
   onSwitchCourse,
   onCreateCourse,
@@ -103,6 +106,21 @@ export function SidebarNav({
           <span className="brand-tag">Exam Radar</span>
         </div>
       </div>
+
+      {isGuest && (
+        <div className="guest-banner">
+          <span className="guest-banner-icon">🚀</span>
+          <div className="guest-banner-text">
+            <span className="guest-banner-title">体验模式</span>
+            <span className="guest-banner-desc">数据仅存本地浏览器</span>
+          </div>
+          {onLogout && (
+            <button className="guest-banner-login" onClick={onLogout} title="注册/登录账号">
+              登录
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="course-selector">
         <div className="selector-label">
@@ -158,6 +176,7 @@ export function SidebarNav({
       </div>
 
       <div className="sidebar-footer">
+        <ThemeSwitcher />
         <div className="progress-mini-header">
           <span>复习进度</span>
           <strong>{progressPercent}%</strong>
@@ -166,15 +185,15 @@ export function SidebarNav({
           <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
         </div>
         {user && (
-          <div className="user-card">
-            <div className="user-avatar">{user.username?.slice(0, 1).toUpperCase() || 'U'}</div>
+          <div className={`user-card ${isGuest ? 'guest' : ''}`}>
+            <div className="user-avatar">{isGuest ? '🚀' : user.username?.slice(0, 1).toUpperCase() || 'U'}</div>
             <div className="user-info">
-              <span className="user-name">{user.username}</span>
-              <span className="user-email">{user.email}</span>
+              <span className="user-name">{isGuest ? '体验用户' : user.username}</span>
+              <span className="user-email">{isGuest ? '点击右上角登录保存数据' : user.email}</span>
             </div>
             {onLogout && (
-              <button className="user-logout" onClick={onLogout} title="退出登录">
-                ⎋
+              <button className="user-logout" onClick={onLogout} title={isGuest ? '退出体验模式' : '退出登录'}>
+                {isGuest ? '→' : '⎋'}
               </button>
             )}
           </div>
