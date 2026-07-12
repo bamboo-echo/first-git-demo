@@ -50,7 +50,7 @@ type Analysis = {
   evidence: string[]; supplementList: string[]; summary: string[];
   readinessScore: number; generatedAt: string
 }
-type Plan = { id: string; courseId: string; mode: 'sprint' | 'standard' | 'supplement'; items: string[]; createdAt: string }
+type Plan = { id: string; courseId: string; mode: 'sprint' | 'standard' | 'supplement'; title: string; description: string; items: string[]; createdAt: string }
 type HistoryRecord = {
   id: string; userId: string; courseId: string; courseName: string;
   keyPointsCount: number; tasksTotal: number; tasksDone: number;
@@ -157,14 +157,14 @@ function generatePlans(course: Course, keyPoints: string[]): Plan[] {
   const top3 = keyPoints.slice(0, 3)
   const top5 = keyPoints.slice(0, 5)
   const all = keyPoints
-  const mk = (mode: 'sprint' | 'standard' | 'supplement', points: string[], makeItem: (p: string, i: number) => string): Plan => ({
-    id: uid(), courseId: course.id, mode, createdAt: now(),
+  const mk = (mode: 'sprint' | 'standard' | 'supplement', points: string[], makeItem: (p: string, i: number) => string, title: string, description: string): Plan => ({
+    id: uid(), courseId: course.id, mode, title, description, createdAt: now(),
     items: points.map((p, i) => makeItem(p, i)),
   })
   return [
-    mk('sprint', top3, (p) => `极速攻克：${p}`),
-    mk('standard', top5, (p) => `系统精修：${p}`),
-    mk('supplement', all, (p) => `查漏补缺：${p}`),
+    mk('sprint', top3, (p) => `极速攻克：${p}`, '极速版 · 2小时突击', '时间紧张时，优先拿下最高频、性价比最高的考点'),
+    mk('standard', top5, (p) => `系统精修：${p}`, '标准版 · 1天系统复习', '按章节顺序系统梳理，建立完整知识框架'),
+    mk('supplement', all, (p) => `查漏补缺：${p}`, '补充版 · 查漏补缺', '完成核心复习后，补齐次重点与易遗漏点'),
   ]
 }
 
@@ -199,7 +199,7 @@ export const authApi = {
     setStoredUser({ id: user.id, email: user.email, username: user.username })
     return { token, user: { id: user.id, email: user.email, username: user.username } }
   },
-  async forgotPassword(data: { email: string }) {
+  async forgotPassword(_data: { email: string }) {
     await delay()
     return {
       success: true,
@@ -208,7 +208,7 @@ export const authApi = {
       expiresAt: now(),
     }
   },
-  async resetPassword(data: { token: string; password: string }) {
+  async resetPassword(_data: { token: string; password: string }) {
     await delay()
     return { success: true, message: '密码已重置（演示模式）' }
   },

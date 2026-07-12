@@ -1,5 +1,6 @@
 import './App.css'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { useCourseState } from './hooks/useCourseState'
 import { SidebarNav } from './components/SidebarNav'
 import { InspectorPanel } from './components/InspectorPanel'
@@ -12,7 +13,7 @@ import { HistoryView } from './components/views/HistoryView'
 import { AuthView } from './components/AuthView'
 
 function MainApp() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { user, loading: authLoading, logout, isGuest } = useAuth()
   const {
     courses,
     activeCourse,
@@ -56,37 +57,10 @@ function MainApp() {
     return <AuthView />
   }
 
-  if (!activeCourse) {
-    return (
-      <div className="empty-state">
-        <div className="empty-state-content">
-          <div className="empty-state-mark" aria-hidden="true">
-            <span />
-          </div>
-          <span className="empty-state-kicker">Workspace Empty</span>
-          <h2>还没有课程</h2>
-          <p>创建你的第一个复习课程开始使用</p>
-          <div className="empty-state-actions">
-            <button
-              className="primary-btn"
-              onClick={() => createCourse('我的第一个课程')}
-            >
-              + 新建课程
-            </button>
-          </div>
-          <div className="empty-state-foot">
-            <span>当前用户：{user.username}</span>
-            <button className="link-btn" onClick={logout}>切换账号</button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const course = activeCourse.course
-  const materials = activeCourse.materials
-  const tasks = activeCourse.tasks
-  const plans = activeCourse.plans || []
+  const course = activeCourse?.course
+  const materials = activeCourse?.materials || []
+  const tasks = activeCourse?.tasks || []
+  const plans = activeCourse?.plans || []
 
   const readyMaterials = materials.filter((m: any) => m.status === 'ready').length
   const draftMaterials = materials.filter((m: any) => m.status === 'draft').length
@@ -98,7 +72,30 @@ function MainApp() {
     ? 0
     : Math.round((doneTasks / tasks.length) * 100)
 
+  const renderEmptyState = () => (
+    <div className="empty-state">
+      <div className="empty-state-content">
+        <div className="empty-state-mark" aria-hidden="true">
+          <span />
+        </div>
+        <span className="empty-state-kicker">Workspace Empty</span>
+        <h2>还没有课程</h2>
+        <p>创建你的第一个复习课程开始使用</p>
+        <div className="empty-state-actions">
+          <button
+            className="primary-btn"
+            onClick={() => createCourse('我的第一个课程')}
+          >
+            + 新建课程
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderView = () => {
+    if (!activeCourse) return renderEmptyState()
+
     switch (activeTab) {
       case 'course':
         return <CourseView course={course} onChange={(field, value) => updateCourse({ [field]: value })} />
@@ -135,7 +132,33 @@ function MainApp() {
       case 'history':
         return <HistoryView courses={courses} activeCourseId={activeCourseId} onClear={() => setActiveTab('analysis')} />
       default:
-        return null
+        return renderEmptyState()
+    }
+  }
+
+  const getPageTitle = () => {
+    if (!activeCourse) return '考点雷达'
+    switch (activeTab) {
+      case 'analysis': return '智能分析'
+      case 'plan': return '复习计划'
+      case 'materials': return '资料管理'
+      case 'execution': return '任务执行'
+      case 'course': return course.name
+      case 'history': return '历史归档'
+      default: return course.name
+    }
+  }
+
+  const getEyebrowText = () => {
+    if (!activeCourse) return '欢迎使用'
+    switch (activeTab) {
+      case 'analysis': return '智能分析'
+      case 'plan': return '复习计划'
+      case 'materials': return '资料管理'
+      case 'execution': return '任务执行'
+      case 'course': return '课程设置'
+      case 'history': return '历史归档'
+      default: return ''
     }
   }
 
@@ -147,6 +170,7 @@ function MainApp() {
         activeTab={activeTab}
         progressPercent={progressPercent}
         user={user}
+        isGuest={isGuest}
         onTabChange={setActiveTab}
         onSwitchCourse={setActiveCourseId}
         onCreateCourse={() => createCourse('新课程')}
@@ -159,24 +183,23 @@ function MainApp() {
           <div className="top-bar-left">
             <span className="page-eyebrow-v6">
               <span className="eyebrow-dot"></span>
-              {activeTab === 'analysis' && '智能分析'}
-              {activeTab === 'plan' && '复习计划'}
-              {activeTab === 'materials' && '资料管理'}
-              {activeTab === 'execution' && '任务执行'}
-              {activeTab === 'course' && '课程设置'}
-              {activeTab === 'history' && '历史归档'}
+              {getEyebrowText()}
             </span>
-            <h1 className="page-title-v6">{course.name}</h1>
+            <h1 className="page-title-v6">{getPageTitle()}</h1>
           </div>
           <div className="top-bar-right">
-            <button className="ghost-btn" onClick={reAnalyze} disabled={loading}>
-              {loading ? '分析中...' : '重新分析'}
-            </button>
-            <button className="ghost-btn" onClick={() => {
-              if (confirm('确认归档当前课程？')) archiveCourse()
-            }}>
-              归档
-            </button>
+            {activeCourse && (
+              <>
+                <button className="ghost-btn" onClick={reAnalyze} disabled={loading}>
+                  {loading ? '分析中...' : '重新分析'}
+                </button>
+                <button className="ghost-btn" onClick={() => {
+                  if (confirm('确认归档当前课程？')) archiveCourse()
+                }}>
+                  归档
+                </button>
+              </>
+            )}
           </div>
         </header>
 
@@ -185,23 +208,27 @@ function MainApp() {
         <main className="workspace">{renderView()}</main>
       </div>
 
-      <InspectorPanel
-        course={course}
-        derivedState={derived}
-        analysisStatus={loading ? 'running' : 'idle'}
-        taskProgressPercent={taskProgressPercent}
-        onStartAnalysis={reAnalyze}
-        onArchive={archiveCourse}
-      />
+      {activeCourse && (
+        <InspectorPanel
+          course={course}
+          derivedState={derived}
+          analysisStatus={loading ? 'running' : 'idle'}
+          taskProgressPercent={taskProgressPercent}
+          onStartAnalysis={reAnalyze}
+          onArchive={archiveCourse}
+        />
+      )}
     </div>
   )
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 
